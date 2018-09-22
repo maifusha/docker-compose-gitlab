@@ -1,0 +1,55 @@
+version: '2' 
+
+services:
+
+  Gitlab:
+    image: gitlab/gitlab-ce:latest
+    container_name: gitlab
+    hostname: git.yoursite.com
+    restart: always
+    ports:
+      - '22:22'
+      - '80:80'
+      - '443:443'
+      - '5005:5005'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        # Add any other gitlab.rb configuration here, each on its own line
+        external_url 'https://git.yoursite.com:443'
+
+        nginx['redirect_http_to_https'] = true
+        nginx['ssl_dhparam'] = "/etc/gitlab/ssl/live/git.yoursite.com/dhparam.pem"
+        nginx['ssl_certificate'] = "/etc/gitlab/ssl/live/git.yoursite.com/fullchain.pem"
+        nginx['ssl_certificate_key'] = "/etc/gitlab/ssl/live/git.yoursite.com/privkey.pem"
+
+        registry_external_url "https://git.yoursite.com:5005"
+        registry_nginx['ssl_dhparam'] = "/etc/gitlab/ssl/live/git.yoursite.com/dhparam.pem"
+        registry_nginx['ssl_certificate'] = "/etc/gitlab/ssl/live/git.yoursite.com/fullchain.pem"
+        registry_nginx['ssl_certificate_key'] = "/etc/gitlab/ssl/live/git.yoursite.com/privkey.pem"
+
+        gitlab_rails['gitlab_default_projects_features_builds'] = false
+        gitlab_rails['gitlab_default_projects_features_container_registry'] = false
+        gitlab_rails['smtp_enable'] = true
+        gitlab_rails['smtp_address'] = "smtp.exmail.qq.com"
+        gitlab_rails['smtp_port'] = 465
+        gitlab_rails['smtp_tls'] = true
+        gitlab_rails['gitlab_email_from'] = "noreply@yoursite.com"
+        gitlab_rails['smtp_user_name'] = "noreply@yoursite.com"
+        gitlab_rails['smtp_password'] = "xxx"
+        gitlab_rails['smtp_authentication'] = "login"
+        gitlab_rails['smtp_enable_starttls_auto'] = true
+    volumes:
+      - /srv/gitlab/config:/etc/gitlab
+      - /srv/gitlab/logs:/var/log/gitlab
+      - /srv/gitlab/data:/var/opt/gitlab
+      - /etc/letsencrypt:/etc/gitlab/ssl
+
+  Runner:
+    image: gitlab/gitlab-runner:alpine-bleeding
+    container_name: runner
+    hostname: runner
+    restart: always
+    volumes:
+      - /srv/gitlab-runner:/etc/gitlab-runner
+      - /var/run/docker.sock:/var/run/docker.sock
+
