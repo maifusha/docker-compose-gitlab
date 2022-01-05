@@ -1,4 +1,4 @@
-> Docker compose for gitlab
+> Docker compose for gitlab with CiRunner
 
 #### Quick Start
 ```bash
